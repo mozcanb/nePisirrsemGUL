@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ne Pişirsem?</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .recipe-card {
+        transition: transform 0.3s;
+        height: 100%;
+      }
+      .recipe-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      }
+      .recipe-image {
+        height: 200px;
+        object-fit: cover;
+      }
+      .navbar-brand {
+        font-weight: bold;
+        color: #ff6b6b !important;
+      }
+      .navbar {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      .btn-primary {
+        background-color: #ff6b6b;
+        border-color: #ff6b6b;
+      }
+      .btn-primary:hover {
+        background-color: #e95f5f;
+        border-color: #e95f5f;
+      }
+      .btn-outline-primary {
+        color: #ff6b6b;
+        border-color: #ff6b6b;
+      }
+      .btn-outline-primary:hover {
+        background-color: #ff6b6b;
+        border-color: #ff6b6b;
+      }
+      .section-title {
+        border-bottom: 2px solid #ff6b6b;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      #loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255,255,255,0.7);
+        z-index: 9999;
+        display: none;
+      }
+
+      #loader.visible {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Yükleniyor...</span>
+      </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+      <div class="container">
+        <a class="navbar-brand" href="javascript:void(0)" onclick="loadPage('home')">
+          <i class="fas fa-utensils me-2"></i>Ne Pişirsem?
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" onclick="loadPage('home')">Ana Sayfa</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" onclick="loadPage('tarifler')">Tarifler</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" onclick="loadPage('dunyaMutfagi')">Dünya Mutfağı</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" onclick="loadPage('nePisireyim')">Ne Pişireyim?</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" onclick="loadPage('yemekPlani')">Yemek Planı</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="javascript:void(0)" onclick="loadPage('ozelSunumlar')">Özel Sunumlar</a>
+            </li>
+          </ul>
+          <form class="d-flex" onsubmit="searchRecipes(); return false;">
+            <input class="form-control me-2" type="search" id="searchInput" placeholder="Tarif Ara..." aria-label="Search">
+            <button class="btn btn-outline-primary" type="submit">Ara</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4" id="mainContent">
+      <!-- İçerik JavaScript ile dinamik olarak buraya yüklenecek -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+      <div class="container text-center">
+        <p class="mb-0">© 2023 Ne Pişirsem? | Tüm Hakları Saklıdır</p>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      // Sayfa yüklendiğinde Ana Sayfa'yı göster
+      window.onload = function() {
+        console.log("Sayfa yüklendi");
+        // İçerik yüklenmeden önce loader'ı göster
+        showLoader();
+
+        // Ana sayfayı yükle
+        loadPage('home');
+      };
+
+      // Loading göstergesi
+      function showLoader() {
+        document.getElementById('loader').classList.add('visible');
+      }
+
+      function hideLoader() {
+        document.getElementById('loader').classList.remove('visible');
+      }
+
+      // Sayfa geçişlerini yönetecek ana fonksiyon
+      function loadPage(page) {
+        showLoader();
+
+        try {
+          // Önce navbar'ı kapatma (mobil görünüm için)
+          var navbarCollapse = document.querySelector('.navbar-collapse.show');
+          if (navbarCollapse) {
+            var bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+            if (bsCollapse) {
+              bsCollapse.hide();
+            }
+          }
+
+          // Sayfa içeriğini yükle
+          switch(page) {
+            case 'home':
+              loadHomePage();
+              break;
+            case 'tarifler':
+              loadTariflerPage();
+              break;
+            case 'dunyaMutfagi':
+              loadDunyaMutfagiPage();
+              break;
+            case 'nePisireyim':
+              loadNePisireyimPage();
+              break;
+            case 'yemekPlani':
+              loadYemekPlaniPage();
+              break;
+            case 'ozelSunumlar':
+              loadOzelSunumlarPage();
+              break;
+            default:
+              loadHomePage();
+          }
+
+          // Sayfayı en üste kaydır
+          window.scrollTo(0, 0);
+        } catch (error) {
+          console.error('Sayfa yükleme hatası:', error);
+          hideLoader();
+          document.getElementById('mainContent').innerHTML = '<div class="alert alert-danger">Sayfa yüklenirken bir hata oluştu: ' + error.message + '</div>';
+        }
+      }
+
+      // Ana Sayfa
+      function loadHomePage() {
+        var mainContent = document.getElementById('mainContent');
+
+        // Ana sayfa içeriğini oluştur (görseller ile)
+        var html = `
+          <div class="row mb-5">
+            <div class="col">
+              <div class="card border-0 bg-light">
+                <div class="card-body p-5 text-center">
+                  <h1 class="display-4 mb-4">Ne Pişirsem?</h1>
+                  <p class="lead mb-4">Yemek tariflerini keşfedin, günlük menüler oluşturun, trend yemekleri takip edin!</p>
+                  <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-primary btn-lg" onclick="loadPage('nePisireyim')">
+                      <i class="fas fa-search me-2"></i>Tarif Ara
+                    </button>
+                    <button class="btn btn-outline-primary btn-lg" onclick="loadPage('yemekPlani')">
+                      <i class="fas fa-calendar-alt me-2"></i>Yemek Planı Yap
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-5">
+            <div class="col-md-4 mb-4">
+              <div class="card h-100 border-0 shadow-sm">
+                <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" class="card-img-top" alt="Yemek Pişirme">
+                <div class="card-body text-center">
+                  <h3 class="card-title">Trend Tarifler</h3>
+                  <p class="card-text">En çok aranan tarifler ve popüler yemekler</p>
+                  <button class="btn btn-primary" onclick="loadPage('tarifler')">Tarifleri Keşfet</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-4">
+              <div class="card h-100 border-0 shadow-sm">
+                <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" class="card-img-top" alt="Dünya Mutfağı">
+                <div class="card-body text-center">
+                  <h3 class="card-title">Dünya Mutfağı</h3>
+                  <p class="card-text">Farklı kültürlerden lezzetli yemek tarifleri</p>
+                  <button class="btn btn-primary" onclick="loadPage('dunyaMutfagi')">Mutfakları Keşfet</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-4">
+              <div class="card h-100 border-0 shadow-sm">
+                <img src="https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" class="card-img-top" alt="Yemek Planı">
+                <div class="card-body text-center">
+                  <h3 class="card-title">Yemek Planı</h3>
+                  <p class="card-text">Haftalık yemek planınızı kolayca oluşturun</p>
+                  <button class="btn btn-primary" onclick="loadPage('yemekPlani')">Plan Oluştur</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Günün tariflerini göster
+        html += `
+          <div class="row mb-5">
+            <div class="col">
+              <h2 class="section-title">Günün En Çok Aranan Tarifleri</h2>
+            </div>
+          </div>
+          <div class="row" id="trendingRecipes">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Günlük menü önerileri bölümü ekle
+        html += `
+          <div class="row mb-4">
+            <div class="col">
+              <h2 class="section-title">Günün Menü Önerileri</h2>
+            </div>
+          </div>
+          <div class="row" id="dailyMenu">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        // Trend tarifleri yükle
+        google.script.run
+          .withSuccessHandler(function(recipes) {
+            var recipesHtml = '';
+
+            if (recipes && recipes.length > 0) {
+              recipes.forEach(function(recipe) {
+                recipesHtml += `
+                  <div class="col-md-4 mb-4">
+                    <div class="card recipe-card h-100">
+                      <img src="${recipe.imageUrl || 'https://via.placeholder.com/300x200?text=Tarif+Görseli'}" class="card-img-top recipe-image" alt="${recipe.title}">
+                      <div class="card-body">
+                        <h5 class="card-title">${recipe.title}</h5>
+                        <p class="card-text">${recipe.description || ''}</p>
+                        <p class="text-muted small">
+                          <i class="far fa-clock me-1"></i>${(recipe.preparationTime || 0) + (recipe.cookingTime || 0)} dakika
+                          <span class="ms-3"><i class="fas fa-signal me-1"></i>${recipe.difficulty || 'Orta'}</span>
+                        </p>
+                      </div>
+                      <div class="card-footer bg-white">
+                        <button class="btn btn-primary btn-sm" onclick="viewRecipe(${recipe.id})">Tarifi Gör</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              recipesHtml = `
+                <div class="col-12 text-center py-4">
+                  <p class="text-muted">Henüz tarif eklenmemiş.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('trendingRecipes').innerHTML = recipesHtml;
+          })
+          .getTrendingRecipes();
+
+        // Günlük menü önerilerini yükle
+        google.script.run
+          .withSuccessHandler(function(menu) {
+            var menuHtml = '';
+
+            if (menu && menu.length > 0) {
+              var mealTypes = {
+                breakfast: "Kahvaltı",
+                lunch: "Öğle Yemeği",
+                dinner: "Akşam Yemeği",
+                snack: "Atıştırmalık"
+              };
+
+              Object.keys(mealTypes).forEach(function(mealType) {
+                var mealRecipes = menu.filter(function(item) {
+                  return item.mealType === mealType;
+                });
+
+                menuHtml += `
+                  <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100">
+                      <div class="card-header bg-white">
+                        <h5 class="mb-0">${mealTypes[mealType]}</h5>
+                      </div>
+                      <ul class="list-group list-group-flush">
+                `;
+
+                if (mealRecipes.length > 0) {
+                  mealRecipes.forEach(function(recipe) {
+                    menuHtml += `
+                      <li class="list-group-item">
+                        <a href="javascript:void(0)" onclick="viewRecipe(${recipe.id})" class="text-decoration-none">
+                          ${recipe.title}
+                        </a>
+                      </li>
+                    `;
+                  });
+                } else {
+                  menuHtml += `<li class="list-group-item">Öneri bulunamadı</li>`;
+                }
+
+                menuHtml += `
+                      </ul>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              menuHtml = `
+                <div class="col-12 text-center py-4">
+                  <p class="text-muted">Günlük menü önerisi bulunamadı.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('dailyMenu').innerHTML = menuHtml;
+            hideLoader();
+          })
+          .getDailyMenuSuggestions();
+      }
+
+      // Tarifler Sayfası
+      function loadTariflerPage() {
+        var mainContent = document.getElementById('mainContent');
+
+        var categories = [
+          { id: 'breakfast', name: 'Kahvaltı' },
+          { id: 'appetizer', name: 'Başlangıç' },
+          { id: 'snack', name: 'Aparatif' },
+          { id: 'main', name: 'Ana Yemekler' },
+          { id: 'dessert', name: 'Tatlılar' },
+          { id: 'sauce', name: 'Soslar' }
+        ];
+
+        var html = `
+          <div class="row mb-4">
+            <div class="col">
+              <h2 class="section-title">Yemek Tarifleri</h2>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col">
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-primary me-2" onclick="filterRecipes('all')">Tümü</button>
+        `;
+
+        categories.forEach(function(category) {
+          html += `<button class="btn btn-sm btn-outline-primary me-2" onclick="filterRecipes('${category.id}')">${category.name}</button>`;
+        });
+
+        html += `
+              </div>
+            </div>
+          </div>
+
+          <div class="row" id="recipesList">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        // Tarifleri yükle
+        google.script.run
+          .withSuccessHandler(function(recipes) {
+            var recipesHtml = '';
+
+            if (recipes && recipes.length > 0) {
+              recipes.forEach(function(recipe) {
+                recipesHtml += `
+                  <div class="col-md-4 mb-4">
+                    <div class="card recipe-card h-100">
+                      <img src="${recipe.imageUrl || 'https://via.placeholder.com/300x200?text=Tarif+Görseli'}" class="card-img-top recipe-image" alt="${recipe.title}">
+                      <div class="card-body">
+                        <h5 class="card-title">${recipe.title}</h5>
+                        <p class="card-text">${recipe.description || ''}</p>
+                        <p class="text-muted small">
+                          <i class="far fa-clock me-1"></i>${(recipe.preparationTime || 0) + (recipe.cookingTime || 0)} dakika
+                          <span class="ms-3"><i class="fas fa-signal me-1"></i>${recipe.difficulty || 'Orta'}</span>
+                        </p>
+                      </div>
+                      <div class="card-footer bg-white">
+                        <button class="btn btn-primary btn-sm" onclick="viewRecipe(${recipe.id})">Tarifi Gör</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              recipesHtml = `
+                <div class="col-12 text-center py-4">
+                  <p class="text-muted">Henüz tarif eklenmemiş.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('recipesList').innerHTML = recipesHtml;
+            hideLoader();
+          })
+          .getTrendingRecipes();
+      }
+
+      // Tarifleri filtrele
+      function filterRecipes(category) {
+        document.getElementById('recipesList').innerHTML = `
+          <div class="col-12 text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+          </div>
+        `;
+
+        // Bu kısımda kategoriye göre filtreleme yapılabilir
+        // Şimdilik tüm tarifleri gösterelim
+        google.script.run
+          .withSuccessHandler(function(recipes) {
+            var recipesHtml = '';
+
+            if (recipes && recipes.length > 0) {
+              recipes.forEach(function(recipe) {
+                recipesHtml += `
+                  <div class="col-md-4 mb-4">
+                    <div class="card recipe-card h-100">
+                      <img src="${recipe.imageUrl || 'https://via.placeholder.com/300x200?text=Tarif+Görseli'}" class="card-img-top recipe-image" alt="${recipe.title}">
+                      <div class="card-body">
+                        <h5 class="card-title">${recipe.title}</h5>
+                        <p class="card-text">${recipe.description || ''}</p>
+                        <p class="text-muted small">
+                          <i class="far fa-clock me-1"></i>${(recipe.preparationTime || 0) + (recipe.cookingTime || 0)} dakika
+                          <span class="ms-3"><i class="fas fa-signal me-1"></i>${recipe.difficulty || 'Orta'}</span>
+                        </p>
+                      </div>
+                      <div class="card-footer bg-white">
+                        <button class="btn btn-primary btn-sm" onclick="viewRecipe(${recipe.id})">Tarifi Gör</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              recipesHtml = `
+                <div class="col-12 text-center py-4">
+                  <p class="text-muted">Bu kategoride tarif bulunamadı.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('recipesList').innerHTML = recipesHtml;
+          })
+          .getTrendingRecipes();
+      }
+
+      // Dünya Mutfağı Sayfası
+      function loadDunyaMutfagiPage() {
+        var mainContent = document.getElementById('mainContent');
+
+        var html = `
+          <div class="row mb-4">
+            <div class="col">
+              <h2 class="section-title">Dünya Mutfağı</h2>
+              <p>Farklı ülkelerin mutfak kültürlerinden lezzetli tarifler keşfedin.</p>
+            </div>
+          </div>
+
+          <div class="row" id="cuisinesList">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        // Mutfakları yükle
+        google.script.run
+          .withSuccessHandler(function(cuisines) {
+            var cuisinesHtml = '';
+
+            if (cuisines && cuisines.length > 0) {
+              cuisines.forEach(function(cuisine) {
+                cuisinesHtml += `
+                  <div class="col-md-3 mb-4">
+                    <div class="card h-100 recipe-card">
+                      <div class="card-body text-center">
+                        <h5 class="card-title">${cuisine.name}</h5>
+                        <button class="btn btn-primary mt-3" onclick="viewCuisineRecipes('${cuisine.id}')">
+                          Tarifleri Gör
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              cuisinesHtml = `
+                <div class="col-12 text-center py-4">
+                  <p class="text-muted">Henüz mutfak eklenmemiş.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('cuisinesList').innerHTML = cuisinesHtml;
+            hideLoader();
+          })
+          .getWorldCuisines();
+      }
+
+      // Belirli bir mutfağın tariflerini göster
+      function viewCuisineRecipes(cuisineId) {
+        // Burada belirli bir mutfağın tarifleri gösterilecek
+        alert('Bu mutfağın tarifleri yakında eklenecek!');
+      }
+
+      // Ne Pişireyim Sayfası
+      function loadNePisireyimPage() {
+        var mainContent = document.getElementById('mainContent');
+
+        var html = `
+          <div class="row mb-4">
+            <div class="col">
+              <h2 class="section-title">Ne Pişireyim?</h2>
+              <p>Aklınızdaki tarifleri veya malzemeleri yazın, size uygun tarifler önereceğiz.</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Tarif Ara</h5>
+                  <p class="card-text">Aklınızdaki yemeği yazın, tüm web'de arayalım.</p>
+
+                  <div class="mt-4">
+                    <div class="mb-3">
+                      <label for="recipeSearchInput" class="form-label">Ne yemek istiyorsunuz?</label>
+                      <input type="text" class="form-control" id="recipeSearchInput" placeholder="Örn: Mantarlı risotto">
+                    </div>
+                    <button class="btn btn-primary" onclick="searchWebRecipes()">
+                      <i class="fas fa-search me-2"></i>Tüm Web'de Ara
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Malzemelere Göre Ara</h5>
+                  <p class="card-text">Evinizde bulunan malzemeleri girin, yapabileceğiniz tarifleri bulalım.</p>
+
+                  <div class="mt-4">
+                    <div class="mb-3">
+                      <label for="ingredientsInput" class="form-label">Malzemeleriniz</label>
+                      <textarea class="form-control" id="ingredientsInput" rows="3" placeholder="Örn: domates, soğan, bulgur"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="searchByIngredients()">
+                      <i class="fas fa-utensils me-2"></i>Tarif Bul
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col">
+              <h3 class="section-title">Popüler Aramalar</h3>
+            </div>
+          </div>
+
+          <div class="row" id="searchTrends">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        // Arama trendlerini yükle
+        google.script.run
+          .withSuccessHandler(function(trends) {
+            var trendsHtml = '';
+
+            if (trends && trends.length > 0) {
+              trends.forEach(function(trend) {
+                trendsHtml += `
+                  <div class="col-md-3 mb-3">
+                    <div class="card">
+                      <div class="card-body text-center">
+                        <a href="javascript:void(0)" class="text-decoration-none" onclick="document.getElementById('recipeSearchInput').value='${trend}'; searchWebRecipes();">
+                          ${trend}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              trendsHtml = `
+                <div class="col-12 text-center py-4">
+                  <p class="text-muted">Henüz arama trendi bulunmuyor.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('searchTrends').innerHTML = trendsHtml;
+            hideLoader();
+          })
+          .getSearchTrends();
+      }
+
+      // Web'den tarif ara
+      function searchWebRecipes() {
+        var query = document.getElementById('recipeSearchInput').value.trim();
+
+        if (!query) {
+          alert('Lütfen bir arama terimi girin');
+          return;
+        }
+
+        showLoader();
+
+        google.script.run
+          .withSuccessHandler(function(recipes) {
+            var mainContent = document.getElementById('mainContent');
+
+            var html = `
+              <div class="row mb-4">
+                <div class="col">
+                  <button class="btn btn-outline-primary mb-3" onclick="loadPage('nePisireyim')">
+                    <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                  </button>
+                  <h2 class="section-title">"${query}" için arama sonuçları</h2>
+                </div>
+              </div>
+
+              <div class="row" id="searchResults">
+            `;
+
+            if (recipes && recipes.length > 0) {
+              recipes.forEach(function(recipe, index) {
+                html += `
+                  <div class="col-md-4 mb-4">
+                    <div class="card recipe-card h-100">
+                      <img src="${recipe.image || 'https://via.placeholder.com/300x200?text=Tarif+Görseli'}" class="card-img-top recipe-image" alt="${recipe.title}">
+                      <div class="card-body">
+                        <h5 class="card-title">${recipe.title}</h5>
+                        <p class="card-text">${recipe.description || ''}</p>
+                        <p class="text-muted small">
+                          <i class="far fa-clock me-1"></i>${(recipe.preparationTime || 0) + (recipe.cookingTime || 0)} dakika
+                        </p>
+                      </div>
+                      <div class="card-footer bg-white">
+                        <button class="btn btn-primary btn-sm" onclick="viewWebRecipe(${index})">Tarifi Gör</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+
+              // Tarifleri geçici olarak sakla
+              window.tempWebRecipes = recipes;
+            } else {
+              html += `
+                <div class="col-12 text-center py-5">
+                  <p class="text-muted">Aramanıza uygun tarif bulunamadı.</p>
+                </div>
+              `;
+            }
+
+            html += `</div>`;
+
+            mainContent.innerHTML = html;
+            hideLoader();
+          })
+          .searchRecipesFromWeb(query, '');
+      }
+
+      // Malzemelere göre tarif ara
+      function searchByIngredients() {
+        var ingredients = document.getElementById('ingredientsInput').value.trim();
+
+        if (!ingredients) {
+          alert('Lütfen malzeme girin');
+          return;
+        }
+
+        showLoader();
+
+        var ingredientList = ingredients.split(',').map(function(i) { return i.trim(); }).filter(function(i) { return i; });
+
+        google.script.run
+          .withSuccessHandler(function(recipes) {
+            var mainContent = document.getElementById('mainContent');
+
+            var html = `
+              <div class="row mb-4">
+                <div class="col">
+                  <button class="btn btn-outline-primary mb-3" onclick="loadPage('nePisireyim')">
+                    <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                  </button>
+                  <h2 class="section-title">Malzemelere göre bulunan tarifler</h2>
+                  <p>Aranan malzemeler: ${ingredientList.join(', ')}</p>
+                </div>
+              </div>
+
+              <div class="row" id="searchResults">
+            `;
+
+            if (recipes && recipes.length > 0) {
+              recipes.forEach(function(recipe, index) {
+                html += `
+                  <div class="col-md-4 mb-4">
+                    <div class="card recipe-card h-100">
+                      <img src="${recipe.image || 'https://via.placeholder.com/300x200?text=Tarif+Görseli'}" class="card-img-top recipe-image" alt="${recipe.title}">
+                      <div class="card-body">
+                        <h5 class="card-title">${recipe.title}</h5>
+                        <p class="card-text">${recipe.description || ''}</p>
+                        <p class="text-muted small">
+                          <i class="far fa-clock me-1"></i>${(recipe.preparationTime || 0) + (recipe.cookingTime || 0)} dakika
+                        </p>
+                      </div>
+                      <div class="card-footer bg-white">
+                        <button class="btn btn-primary btn-sm" onclick="viewWebRecipe(${index})">Tarifi Gör</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+
+              // Tarifleri geçici olarak sakla
+              window.tempWebRecipes = recipes;
+            } else {
+              html += `
+                <div class="col-12 text-center py-5">
+                  <p class="text-muted">Bu malzemelerle yapılabilecek tarif bulunamadı.</p>
+                </div>
+              `;
+            }
+
+            html += `</div>`;
+
+            mainContent.innerHTML = html;
+            hideLoader();
+          })
+          .searchRecipesFromWeb(ingredientList.join(' '), '');
+      }
+
+      // Web tarifini görüntüle
+      function viewWebRecipe(index) {
+        if (!window.tempWebRecipes || !window.tempWebRecipes[index]) {
+          alert('Tarif bulunamadı!');
+          return;
+        }
+
+        var recipe = window.tempWebRecipes[index];
+        showLoader();
+
+        var mainContent = document.getElementById('mainContent');
+
+        var html = `
+          <div class="row mb-4">
+            <div class="col">
+              <button class="btn btn-outline-primary mb-3" onclick="history.back()">
+                <i class="fas fa-arrow-left me-2"></i>Geri Dön
+              </button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-8">
+              <h2>${recipe.title}</h2>
+              <p>${recipe.description || ''}</p>
+
+              <div class="d-flex gap-4 my-4">
+                <div>
+                  <i class="far fa-clock me-2"></i>
+                  <span>Hazırlık: ${recipe.preparationTime || 0} dakika</span>
+                </div>
+                <div>
+                  <i class="fas fa-fire me-2"></i>
+                  <span>Pişirme: ${recipe.cookingTime || 0} dakika</span>
+                </div>
+                <div>
+                  <i class="fas fa-users me-2"></i>
+                  <span>Porsiyon: ${recipe.servings || 4}</span>
+                </div>
+              </div>
+
+              <h4 class="mt-4 mb-3">Malzemeler</h4>
+              <ul class="list-group mb-4">
+        `;
+
+        if (recipe.ingredients && recipe.ingredients.length > 0) {
+          recipe.ingredients.forEach(function(ingredient) {
+            html += `<li class="list-group-item">${ingredient}</li>`;
+          });
+        } else {
+          html += `<li class="list-group-item">Malzeme bilgisi bulunamadı.</li>`;
+        }
+
+        html += `
+              </ul>
+
+              <h4 class="mt-4 mb-3">Hazırlanışı</h4>
+              <div class="card">
+                <div class="card-body">
+                  ${recipe.instructions || 'Hazırlanış bilgisi bulunamadı.'}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <img src="${recipe.image || 'https://via.placeholder.com/400x300?text=Tarif+Görseli'}" class="img-fluid rounded" alt="${recipe.title}">
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+        hideLoader();
+      }
+
+      // Tarif detaylarını göster
+      function viewRecipe(recipeId) {
+        showLoader();
+
+        google.script.run
+          .withSuccessHandler(function(recipe) {
+            if (!recipe) {
+              alert('Tarif bulunamadı!');
+              hideLoader();
+              return;
+            }
+
+            var mainContent = document.getElementById('mainContent');
+
+            var html = `
+              <div class="row mb-4">
+                <div class="col">
+                  <button class="btn btn-outline-primary mb-3" onclick="history.back()">
+                    <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                  </button>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-lg-8">
+                  <h1>${recipe.title}</h1>
+                  <p class="lead">${recipe.description || ''}</p>
+
+                  <div class="d-flex flex-wrap gap-4 my-4">
+                    <div class="d-flex align-items-center">
+                      <i class="far fa-clock me-2 text-primary"></i>
+                      <div>
+                        <div class="small text-muted">Hazırlık</div>
+                        <div>${recipe.preparationTime || 0} dakika</div>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-fire me-2 text-primary"></i>
+                      <div>
+                        <div class="small text-muted">Pişirme</div>
+                        <div>${recipe.cookingTime || 0} dakika</div>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-signal me-2 text-primary"></i>
+                      <div>
+                        <div class="small text-muted">Zorluk</div>
+                        <div>${recipe.difficulty || 'Orta'}</div>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-users me-2 text-primary"></i>
+                      <div>
+                        <div class="small text-muted">Porsiyon</div>
+                        <div>${recipe.servings || 4} kişilik</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 class="mt-5">Malzemeler</h3>
+                  <ul class="list-group mb-4">
+            `;
+
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+              recipe.ingredients.forEach(function(ingredient) {
+                html += `
+                  <li class="list-group-item d-flex align-items-center">
+                    <span class="me-auto">${ingredient.name}</span>
+                    <span>${ingredient.amount || ''} ${ingredient.unit || ''}</span>
+                  </li>
+                `;
+              });
+            } else {
+              html += `<li class="list-group-item">Malzeme bilgisi bulunamadı.</li>`;
+            }
+
+            html += `
+                  </ul>
+
+                  <h3 class="mt-5">Hazırlanışı</h3>
+                  <div class="card mb-4">
+                    <div class="card-body">
+            `;
+
+            if (recipe.steps && recipe.steps.length > 0) {
+              recipe.steps.forEach(function(step, index) {
+                html += `
+                  <div class="mb-4">
+                    <h5 class="mb-3">Adım ${index + 1}</h5>
+                    <p>${step}</p>
+                  </div>
+                `;
+              });
+            } else {
+              html += `<p>${recipe.steps || 'Hazırlanış detayları eklenmemiş.'}</p>`;
+            }
+
+            html += `
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-4">
+                  <div class="mb-4">
+                    <img src="${recipe.imageUrl || 'https://via.placeholder.com/400x300?text=Tarif+Görseli'}" class="img-fluid rounded" alt="${recipe.title}">
+                  </div>
+                </div>
+              </div>
+            `;
+
+            mainContent.innerHTML = html;
+            hideLoader();
+          })
+          .getRecipeDetails(recipeId);
+      }
+
+      // Yemek Planı Sayfası
+      function loadYemekPlaniPage() {
+        var mainContent = document.getElementById('mainContent');
+
+        var html = `
+          <div class="row mb-4">
+            <div class="col">
+              <h2 class="section-title">Haftalık Yemek Planı</h2>
+              <p>Haftalık yemek planınızı yapın, alışveriş listenizi hazırlayın.</p>
+            </div>
+          </div>
+
+          <div class="row" id="mealPlanGrid">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        // Haftalık planı oluştur
+        var today = new Date();
+        var startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+
+        var days = [];
+        for (var i = 0; i < 7; i++) {
+          var day = new Date(startOfWeek);
+          day.setDate(startOfWeek.getDate() + i);
+          days.push(day);
+        }
+
+        // Mevcut planları yükle
+        google.script.run
+          .withSuccessHandler(function(plans) {
+            var weekGrid = `
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 16%">Öğün / Gün</th>
+            `;
+
+            days.forEach(function(day) {
+              var dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+              var formattedDate = day.toLocaleDateString('tr-TR', dateOptions);
+              weekGrid += `<th style="width: 12%">${formattedDate}</th>`;
+            });
+
+            weekGrid += `
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
+
+            var mealTypes = [
+              { id: 'breakfast', name: 'Kahvaltı' },
+              { id: 'lunch', name: 'Öğle Yemeği' },
+              { id: 'dinner', name: 'Akşam Yemeği' },
+              { id: 'snack', name: 'Atıştırmalık' }
+            ];
+
+            mealTypes.forEach(function(mealType) {
+              weekGrid += `
+                <tr>
+                  <td class="fw-bold">${mealType.name}</td>
+              `;
+
+              days.forEach(function(day) {
+                weekGrid += `
+                  <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary" onclick="addMealPlan('${day.toISOString().split('T')[0]}', '${mealType.id}')">
+                      <i class="fas fa-plus me-1"></i>Ekle
+                    </button>
+                  </td>
+                `;
+              });
+
+              weekGrid += `</tr>`;
+            });
+
+            weekGrid += `
+                  </tbody>
+                </table>
+              </div>
+            `;
+
+            document.getElementById('mealPlanGrid').innerHTML = weekGrid;
+            hideLoader();
+          })
+          .getMealPlans();
+      }
+
+      // Yemek planı ekle
+      function addMealPlan(date, mealType) {
+        alert('Yemek planı ekleme özelliği yakında eklenecek!');
+      }
+
+      // Özel Sunumlar Sayfası
+      function loadOzelSunumlarPage() {
+        var mainContent = document.getElementById('mainContent');
+
+        var html = `
+          <div class="row mb-4">
+            <div class="col">
+              <h2 class="section-title">Özel Sunum Önerileri</h2>
+              <p>En çok beğenilen ve yorum alan özel sunum önerileri.</p>
+            </div>
+          </div>
+
+          <div class="row" id="presentationsList">
+            <div class="col-12 text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        // Özel sunumları yükle
+        google.script.run
+          .withSuccessHandler(function(presentations) {
+            var presentationsHtml = '';
+
+            if (presentations && presentations.length > 0) {
+              presentations.forEach(function(presentation) {
+                presentationsHtml += `
+                  <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                      <div class="row g-0">
+                        <div class="col-md-4">
+                          <img src="${presentation.imageUrl || 'https://via.placeholder.com/300x200?text=Sunum+Görseli'}" class="img-fluid rounded-start h-100" alt="${presentation.title}" style="object-fit: cover;">
+                        </div>
+                        <div class="col-md-8">
+                          <div class="card-body">
+                            <h5 class="card-title">${presentation.title}</h5>
+                            <p class="card-text">${presentation.description || ''}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                              <div>
+                                <span class="badge bg-primary me-2">
+                                  <i class="fas fa-heart me-1"></i>${presentation.likes || 0}
+                                </span>
+                                <span class="badge bg-secondary">
+                                  <i class="fas fa-comment me-1"></i>${presentation.comments || 0}
+                                </span>
+                              </div>
+                              <button class="btn btn-sm btn-primary" onclick="viewPresentation(${presentation.id})">
+                                Detaylar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              presentationsHtml = `
+                <div class="col-12 text-center py-5">
+                  <p class="text-muted">Henüz özel sunum önerisi eklenmemiş.</p>
+                </div>
+              `;
+            }
+
+            document.getElementById('presentationsList').innerHTML = presentationsHtml;
+            hideLoader();
+          })
+          .getPopularPresentations();
+      }
+
+      // Arama fonksiyonu
+      function searchRecipes() {
+        var searchTerm = document.getElementById('searchInput').value.trim();
+
+        if (!searchTerm) {
+          alert('Lütfen bir arama terimi girin');
+          return;
+        }
+
+        showLoader();
+
+        google.script.run
+          .withSuccessHandler(function(recipes) {
+            var mainContent = document.getElementById('mainContent');
+
+            var html = `
+              <div class="row mb-4">
+                <div class="col">
+                  <h2 class="section-title">"${searchTerm}" için arama sonuçları</h2>
+                </div>
+              </div>
+
+              <div class="row" id="searchResults">
+            `;
+
+            if (recipes && recipes.length > 0) {
+              recipes.forEach(function(recipe, index) {
+                html += `
+                  <div class="col-md-4 mb-4">
+                    <div class="card recipe-card h-100">
+                      <img src="${recipe.image || 'https://via.placeholder.com/300x200?text=Tarif+Görseli'}" class="card-img-top recipe-image" alt="${recipe.title}">
+                      <div class="card-body">
+                        <h5 class="card-title">${recipe.title}</h5>
+                        <p class="card-text">${recipe.description || ''}</p>
+                        <p class="text-muted small">
+                          <i class="far fa-clock me-1"></i>${(recipe.preparationTime || 0) + (recipe.cookingTime || 0)} dakika
+                        </p>
+                      </div>
+                      <div class="card-footer bg-white">
+                        <button class="btn btn-primary btn-sm" onclick="viewWebRecipe(${index})">Tarifi Gör</button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+
+              // Tarifleri geçici olarak sakla
+              window.tempWebRecipes = recipes;
+            } else {
+              html += `
+                <div class="col-12 text-center py-5">
+                  <p class="text-muted">Aramanıza uygun tarif bulunamadı.</p>
+                </div>
+              `;
+            }
+
+            html += `</div>`;
+
+            mainContent.innerHTML = html;
+            hideLoader();
+          })
+          .searchRecipesFromWeb(searchTerm, '');
+      }
+    </script>
+  </body>
+</html>
