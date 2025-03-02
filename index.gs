@@ -61,49 +61,50 @@ function getTrendingRecipes() {
   ];
 }
 
-/**
- * Günlük menü önerilerini getir
- */
-function getDailyMenuSuggestions() {
-  // Örnek veriler
-  return [
-    {
-      id: 1,
-      title: "Menemen",
-      mealType: "breakfast",
-      description: "Klasik Türk kahvaltısı",
-      preparationTime: 5,
-      cookingTime: 15,
-      imageUrl: "https://images.unsplash.com/photo-1525351484163-7529414344d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
-    },
-    {
-      id: 2,
-      title: "Mercimek Çorbası",
-      mealType: "lunch",
-      description: "Besleyici kırmızı mercimek çorbası",
-      preparationTime: 10,
-      cookingTime: 30,
-      imageUrl: "https://images.unsplash.com/photo-1547592166-23ac45744acd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
-    },
-    {
-      id: 3,
-      title: "Izgara Tavuk",
-      mealType: "dinner",
-      description: "Baharatlı ızgara tavuk",
-      preparationTime: 15,
-      cookingTime: 25,
-      imageUrl: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
-    },
-    {
-      id: 4,
-      title: "Meyve Tabağı",
-      mealType: "snack",
-      description: "Karışık mevsim meyveleri",
-      preparationTime: 5,
-      cookingTime: 0,
-      imageUrl: "https://images.unsplash.com/photo-1546548970-71785318a17b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+function loadPage(page) {
+  showLoader();
+
+  try {
+    // Önce navbar'ı kapatma (mobil görünüm için)
+    var navbarCollapse = document.querySelector('.navbar-collapse.show');
+    if (navbarCollapse) {
+      var bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+      if (bsCollapse) {
+        bsCollapse.hide();
+      }
     }
-  ];
+
+    // Sayfa içeriğini yükle
+    switch(page) {
+      case 'home':
+        loadHomePage();
+        break;
+      case 'tarifler':
+        loadTariflerPage();
+        break;
+      case 'dunyaMutfagi':
+        loadDunyaMutfagiPage();
+        break;
+      case 'nePisireyim':
+        loadNePisireyimPage();
+        break;
+      case 'yemekPlani':
+        loadYemekPlaniPage();
+        break;
+      case 'ozelSunumlar':
+        loadOzelSunumlarPage();
+        break;
+      default:
+        loadHomePage();
+    }
+
+    // Sayfayı en üste kaydır
+    window.scrollTo(0, 0);
+  } catch (error) {
+    console.error('Sayfa yükleme hatası:', error);
+    hideLoader();
+    document.getElementById('mainContent').innerHTML = '<div class="alert alert-danger">Sayfa yüklenirken bir hata oluştu: ' + error.message + '</div>';
+  }
 }
 
 /**
